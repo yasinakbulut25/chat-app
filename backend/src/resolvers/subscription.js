@@ -1,4 +1,4 @@
-import { MESSAGE_ADDED, pubsub } from "./mutation";
+import { MESSAGE_ADDED, pubsub } from "./mutation.js";
 
 const subscription = {
   messageAdded: {

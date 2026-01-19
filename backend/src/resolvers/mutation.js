@@ -1,4 +1,4 @@
-import messages from "../data/messages";
+import messages from "../data/messages.js";
 import { PubSub } from "graphql-subscriptions";
 
 const pubsub = new PubSub();

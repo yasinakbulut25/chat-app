@@ -1,6 +1,10 @@
 import messages from "../data/messages";
+import { PubSub } from "graphql-subscriptions";
 
-const mutation = {
+const pubsub = new PubSub();
+const MESSAGE_ADDED = "MESSAGE_ADDED";
+
+export const mutation = {
   sendMessage: (_, { content, username }) => {
     const message = {
       id: Date.now().toString(),
@@ -14,8 +18,12 @@ const mutation = {
 
     messages.push(message);
 
+    pubsub.publish(MESSAGE_ADDED, {
+      messageAdded: message,
+    });
+
     return message;
   },
 };
 
-export default mutation;
+export { pubsub, MESSAGE_ADDED };

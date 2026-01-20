@@ -42,7 +42,7 @@ export default function Sidebar() {
         )}
       </div>
 
-      <div>
+      <div className="flex flex-col gap-1 py-3 px-4">
         {users.map((user) => (
           <UserListItem key={user.id} user={user} />
         ))}

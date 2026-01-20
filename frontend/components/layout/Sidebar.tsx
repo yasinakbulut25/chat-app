@@ -5,8 +5,14 @@ import UserListItem from "@/components/users/UserListItem";
 import { Button, Input } from "@heroui/react";
 import { Search, X } from "lucide-react";
 import { useState } from "react";
+import { User } from "@/types/user";
 
-export default function Sidebar() {
+type Props = {
+  selectedUser: User;
+  onSelectUser: (user: User) => void;
+};
+
+export default function Sidebar({ selectedUser, onSelectUser }: Props) {
   const [isSearchable, setIsSearchable] = useState(false);
 
   return (
@@ -44,7 +50,12 @@ export default function Sidebar() {
 
       <div className="flex flex-col gap-1 py-3 px-4">
         {users.map((user) => (
-          <UserListItem key={user.id} user={user} />
+          <UserListItem
+            key={user.id}
+            user={user}
+            isActive={user.id === selectedUser.id}
+            onClick={() => onSelectUser(user)}
+          />
         ))}
       </div>
     </aside>

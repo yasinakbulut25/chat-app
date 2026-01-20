@@ -1,11 +1,21 @@
 import { messages } from "@/data/messages";
 import MessageItem from "./MessageItem";
+import { User } from "@/types/user";
+import { Message } from "@/types/message";
 
-export default function MessageList() {
+type Props = {
+  user: Pick<User, "image" | "id">;
+};
+
+export default function MessageList({ user }: Props) {
+  const filteredMessages: Message[] = messages.filter(
+    (msg) => msg.userId === user.id,
+  );
+
   return (
     <div className="flex-1 p-4 space-y-2 overflow-y-auto">
-      {messages.map((msg) => (
-        <MessageItem key={msg.id} message={msg} />
+      {filteredMessages.map((msg) => (
+        <MessageItem key={msg.id} message={msg} image={user.image} />
       ))}
     </div>
   );

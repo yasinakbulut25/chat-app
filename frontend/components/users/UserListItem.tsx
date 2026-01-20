@@ -1,19 +1,20 @@
+import { User } from "@/types/user";
 import { Button } from "@heroui/react";
 import { Star } from "lucide-react";
 import Image from "next/image";
 
 type Props = {
-  user: {
-    id: string;
-    name: string;
-    lastMessage: string;
-    image: string;
-  };
+  user: User;
+  isActive: boolean;
+  onClick: () => void;
 };
 
-export default function UserListItem({ user }: Props) {
+export default function UserListItem({ user, isActive, onClick }: Props) {
   return (
-    <div className="flex items-start p-2 gap-3 hover:bg-slate-100 rounded-lg cursor-pointer duration-200">
+    <div
+      onClick={onClick}
+      className={`flex items-start p-2 gap-3 ${isActive ? "bg-slate-50" : "bg-transparent"} hover:bg-slate-100 rounded-lg cursor-pointer duration-200`}
+    >
       <Image
         src={user.image}
         alt={user.name}

@@ -12,6 +12,14 @@ export default function MessageList({ user, messages }: Props) {
     (msg) => msg.userId === user.id,
   );
 
+  if (filteredMessages.length === 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
+        Henüz mesaj yok
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 p-4 space-y-2 overflow-y-auto">
       {filteredMessages.map((msg) => (

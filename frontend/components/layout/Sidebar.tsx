@@ -8,7 +8,7 @@ import { useState } from "react";
 import { User } from "@/types/user";
 
 type Props = {
-  selectedUser: User;
+  selectedUser: User | null;
   onSelectUser: (user: User) => void;
 };
 
@@ -53,7 +53,7 @@ export default function Sidebar({ selectedUser, onSelectUser }: Props) {
           <UserListItem
             key={user.id}
             user={user}
-            isActive={user.id === selectedUser.id}
+            isActive={user.id === selectedUser?.id}
             onClick={() => onSelectUser(user)}
           />
         ))}

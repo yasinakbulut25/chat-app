@@ -6,12 +6,18 @@ import { users } from "@/data/users";
 import { messages as initialMessages } from "@/data/messages";
 import { Message } from "@/types/message";
 import { useState } from "react";
+import { User } from "@/types/user";
 
 export default function Home() {
-  const [selectedUser, setSelectedUser] = useState(users[0]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(
+    users.length > 0 ? users[0] : null,
+  );
+
   const [messages, setMessages] = useState<Message[]>(initialMessages);
 
   const handleSendMessage = (text: string) => {
+    if (!selectedUser) return;
+
     const newMessage: Message = {
       id: crypto.randomUUID(),
       userId: selectedUser.id,

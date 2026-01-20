@@ -1,13 +1,13 @@
-import { messages } from "@/data/messages";
 import MessageItem from "./MessageItem";
 import { User } from "@/types/user";
 import { Message } from "@/types/message";
 
 type Props = {
   user: Pick<User, "image" | "id">;
+  messages: Message[];
 };
 
-export default function MessageList({ user }: Props) {
+export default function MessageList({ user, messages }: Props) {
   const filteredMessages: Message[] = messages.filter(
     (msg) => msg.userId === user.id,
   );

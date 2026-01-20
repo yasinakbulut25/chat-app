@@ -2,7 +2,7 @@
 
 import ChatLayout from "@/components/layout/ChatLayout";
 import Sidebar from "@/components/layout/Sidebar";
-import { users } from "@/data/users";
+import { users as initialUsers } from "@/data/users";
 import { messages as initialMessages } from "@/data/messages";
 import { Message } from "@/types/message";
 import { useState } from "react";
@@ -10,9 +10,9 @@ import { User } from "@/types/user";
 
 export default function Home() {
   const [selectedUser, setSelectedUser] = useState<User | null>(
-    users.length > 0 ? users[0] : null,
+    initialUsers.length > 0 ? initialUsers[0] : null,
   );
-
+  const [users, setUsers] = useState<User[]>(initialUsers);
   const [messages, setMessages] =
     useState<Record<string, Message[]>>(initialMessages);
 
@@ -30,11 +30,21 @@ export default function Home() {
       ...prev,
       [selectedUser.id]: [...(prev[selectedUser.id] ?? []), newMessage],
     }));
+
+    setUsers((prev) =>
+      prev.map((user) =>
+        user.id === selectedUser.id ? { ...user, lastMessage: text } : user,
+      ),
+    );
   };
 
   return (
     <main className="h-dvh flex p-4 gap-4">
-      <Sidebar selectedUser={selectedUser} onSelectUser={setSelectedUser} />
+      <Sidebar
+        users={users}
+        selectedUser={selectedUser}
+        onSelectUser={setSelectedUser}
+      />
       <ChatLayout
         selectedUser={selectedUser}
         messages={selectedUser ? (messages[selectedUser.id] ?? []) : []}

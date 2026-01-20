@@ -1,6 +1,5 @@
 "use client";
 
-import { users } from "@/data/users";
 import UserListItem from "@/components/users/UserListItem";
 import { Button, Input } from "@heroui/react";
 import { Search, X } from "lucide-react";
@@ -8,11 +7,12 @@ import { useState } from "react";
 import { User } from "@/types/user";
 
 type Props = {
+  users: User[];
   selectedUser: User | null;
   onSelectUser: (user: User) => void;
 };
 
-export default function Sidebar({ selectedUser, onSelectUser }: Props) {
+export default function Sidebar({ users, selectedUser, onSelectUser }: Props) {
   const [isSearchable, setIsSearchable] = useState(false);
 
   return (

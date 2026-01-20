@@ -3,4 +3,5 @@ export type User = {
   name: string;
   lastMessage: string;
   image: string;
+  isOnline: boolean;
 };

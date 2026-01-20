@@ -15,13 +15,19 @@ export default function UserListItem({ user, isActive, onClick }: Props) {
       onClick={onClick}
       className={`flex items-start p-2 gap-3 ${isActive ? "bg-slate-50" : "bg-transparent"} hover:bg-slate-100 rounded-lg cursor-pointer duration-200`}
     >
-      <Image
-        src={user.image}
-        alt={user.name}
-        width={36}
-        height={36}
-        className="rounded-full object-cover min-w-9 h-9"
-      />
+      <div className="relative">
+        <Image
+          src={user.image}
+          alt={user.name}
+          width={36}
+          height={36}
+          className="rounded-full object-cover min-w-9 h-9"
+        />
+        <span
+          className={`absolute bottom-0 right-0 w-3 h-3 ${user.isOnline ? "bg-green-500" : "bg-slate-300"} border-2 border-white rounded-full`}
+        />
+      </div>
+
       <div className="w-full flex flex-col">
         <div className="flex items-center justify-between gap-1">
           <div className="font-medium text-base text-slate-900">

@@ -13,7 +13,8 @@ export default function Home() {
     users.length > 0 ? users[0] : null,
   );
 
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] =
+    useState<Record<string, Message[]>>(initialMessages);
 
   const handleSendMessage = (text: string) => {
     if (!selectedUser) return;
@@ -25,7 +26,10 @@ export default function Home() {
       isOwn: true,
     };
 
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages((prev) => ({
+      ...prev,
+      [selectedUser.id]: [...(prev[selectedUser.id] ?? []), newMessage],
+    }));
   };
 
   return (
@@ -33,7 +37,7 @@ export default function Home() {
       <Sidebar selectedUser={selectedUser} onSelectUser={setSelectedUser} />
       <ChatLayout
         selectedUser={selectedUser}
-        messages={messages}
+        messages={selectedUser ? (messages[selectedUser.id] ?? []) : []}
         onSendMessage={handleSendMessage}
       />
     </main>

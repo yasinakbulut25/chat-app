@@ -1,6 +1,7 @@
 import MessageItem from "./MessageItem";
 import { User } from "@/types/user";
 import { Message } from "@/types/message";
+import { useEffect, useRef } from "react";
 
 type Props = {
   user: Pick<User, "image" | "id">;
@@ -11,6 +12,12 @@ export default function MessageList({ user, messages }: Props) {
   const filteredMessages: Message[] = messages.filter(
     (msg) => msg.userId === user.id,
   );
+
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [filteredMessages.length]);
 
   if (filteredMessages.length === 0) {
     return (
@@ -25,6 +32,7 @@ export default function MessageList({ user, messages }: Props) {
       {filteredMessages.map((msg) => (
         <MessageItem key={msg.id} message={msg} image={user.image} />
       ))}
+      <div ref={bottomRef} />
     </div>
   );
 }

@@ -19,7 +19,7 @@ export default function MessageItem({ message, image }: Props) {
         className="rounded-full object-cover min-w-6 h-6"
       />
       <div
-        className={`w-full px-3 py-2 text-sm rounded-xl 
+        className={`w-full px-3 py-2 text-sm rounded-xl whitespace-pre-wrap
           ${message.isOwn ? "bg-indigo-500 rounded-tr-none text-white" : "bg-slate-100 rounded-tl-none"}`}
       >
         {message.text}

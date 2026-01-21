@@ -1,25 +1,33 @@
 import { Message } from "@/types/message";
 
 export const messages: Record<string, Message[]> = {
-  "2": [
+  c1: [
     {
       id: "m1",
-      userId: "2",
+      conversationId: "c1",
       text: "Selam 👋",
       isOwn: true,
     },
     {
       id: "m2",
-      userId: "2",
+      conversationId: "c1",
       text: "Nasılsın?",
       isOwn: false,
     },
   ],
-  "3": [
+  c2: [
     {
       id: "m3",
-      userId: "3",
+      conversationId: "c2",
       text: "Toplantı yarın",
+      isOwn: false,
+    },
+  ],
+  c3: [
+    {
+      id: "m4",
+      conversationId: "c3",
+      text: "Baksana artik mesaja",
       isOwn: false,
     },
   ],

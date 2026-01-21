@@ -21,14 +21,17 @@ export default function Home() {
 
     const newMessage: Message = {
       id: crypto.randomUUID(),
-      userId: selectedUser.id,
+      conversationId: selectedUser.conversationId,
       text,
       isOwn: true,
     };
 
     setMessages((prev) => ({
       ...prev,
-      [selectedUser.id]: [...(prev[selectedUser.id] ?? []), newMessage],
+      [selectedUser.conversationId]: [
+        ...(prev[selectedUser.conversationId] ?? []),
+        newMessage,
+      ],
     }));
 
     setUsers((prev) =>
@@ -47,7 +50,7 @@ export default function Home() {
       />
       <ChatLayout
         selectedUser={selectedUser}
-        messages={selectedUser ? (messages[selectedUser.id] ?? []) : []}
+        messages={selectedUser ? (messages[selectedUser.conversationId] ?? []) : []}
         onSendMessage={handleSendMessage}
       />
     </main>

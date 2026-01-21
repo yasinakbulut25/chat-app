@@ -1,6 +1,6 @@
 export type Message = {
   id: string;
-  userId: string;
+  conversationId: string;
   text: string;
   isOwn: boolean;
 };

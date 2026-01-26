@@ -1,19 +1,22 @@
 "use client";
 
+import { useChat } from "@/providers/ChatProvider";
 import { Button, Textarea } from "@heroui/react";
 import { SendHorizonalIcon, SmilePlusIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-type Props = {
-  onSend: (text: string) => void;
-};
-
-export default function MessageInput({ onSend }: Props) {
+export default function MessageInput() {
+  const { selectedUser, sendMessage } = useChat();
   const [text, setText] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [selectedUser]);
 
   const handleSend = () => {
     if (!text.trim()) return;
-    onSend(text);
+    sendMessage(text.trim());
     setText("");
   };
 
@@ -32,6 +35,7 @@ export default function MessageInput({ onSend }: Props) {
         className="bg-transparent text-slate-500 w-auto p-0"
       />
       <Textarea
+        ref={inputRef}
         value={text}
         minRows={1}
         maxRows={5}

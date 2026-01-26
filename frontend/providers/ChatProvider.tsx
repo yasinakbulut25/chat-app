@@ -69,6 +69,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       conversationId: string;
       text: string;
       senderId: string;
+      __typename: "Message";
     };
   }>(SEND_MESSAGE);
 
@@ -76,10 +77,49 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     async (text: string) => {
       if (!selectedUser || !text.trim()) return;
 
+      const optimisticId = `optimistic-${Date.now()}`;
+
       await sendMessageMutation({
         variables: {
           conversationId: selectedUser.id,
           text: text.trim(),
+        },
+
+        optimisticResponse: {
+          sendMessage: {
+            id: optimisticId,
+            conversationId: selectedUser.id,
+            text,
+            senderId: CURRENT_USER_ID,
+            __typename: "Message",
+          },
+        },
+
+        update: (cache, { data }) => {
+          if (!data?.sendMessage) return;
+
+          const existing = cache.readQuery<{
+            messages: {
+              id: string;
+              conversationId: string;
+              text: string;
+              senderId: string;
+              __typename: string;
+            }[];
+          }>({
+            query: GET_MESSAGES,
+            variables: { conversationId: selectedUser.id },
+          });
+
+          if (!existing) return;
+
+          cache.writeQuery({
+            query: GET_MESSAGES,
+            variables: { conversationId: selectedUser.id },
+            data: {
+              messages: [...existing.messages, data.sendMessage],
+            },
+          });
         },
       });
     },

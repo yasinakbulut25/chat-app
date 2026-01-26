@@ -8,12 +8,13 @@ import {
   useMemo,
   useCallback,
 } from "react";
-import { useMutation, useQuery } from "@apollo/client/react";
+import { useMutation, useQuery, useSubscription } from "@apollo/client/react";
 import { GET_USERS } from "@/graphql/queries/users";
 import { GET_MESSAGES } from "@/graphql/queries/messages";
 import { SEND_MESSAGE } from "@/graphql/mutations/sendMessage";
 import { User } from "@/types/user";
 import { Message } from "@/types/message";
+import { MESSAGE_SUBSCRIPTION } from "@/graphql/subscriptions";
 
 type ChatContextValue = {
   users: User[];
@@ -22,6 +23,16 @@ type ChatContextValue = {
   loading: boolean;
   selectUser: (user: User) => void;
   sendMessage: (text: string) => Promise<void>;
+};
+
+type MessageAddedResponse = {
+  messageAdded: {
+    id: string;
+    conversationId: string;
+    text: string;
+    senderId: string;
+    __typename: "Message";
+  };
 };
 
 const ChatContext = createContext<ChatContextValue | null>(null);
@@ -129,6 +140,42 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const selectUser = (user: User) => {
     setSelectedUser(user);
   };
+
+  useSubscription<MessageAddedResponse>(MESSAGE_SUBSCRIPTION, {
+    skip: !selectedUser,
+    variables: {
+      conversationId: selectedUser?.id,
+    },
+    onData: ({ client, data }) => {
+      const newMessage = data.data?.messageAdded;
+      if (!newMessage || !selectedUser) return;
+
+      const existing = client.readQuery<{
+        messages: {
+          id: string;
+          conversationId: string;
+          text: string;
+          senderId: string;
+          __typename: string;
+        }[];
+      }>({
+        query: GET_MESSAGES,
+        variables: { conversationId: selectedUser.id },
+      });
+
+      if (!existing) return;
+
+      if (existing.messages.some((m) => m.id === newMessage.id)) return;
+
+      client.writeQuery({
+        query: GET_MESSAGES,
+        variables: { conversationId: selectedUser.id },
+        data: {
+          messages: [...existing.messages, newMessage],
+        },
+      });
+    },
+  });
 
   const value = useMemo<ChatContextValue>(
     () => ({

@@ -1,14 +1,14 @@
 "use client";
 
 import UserListItem from "@/components/users/UserListItem";
-import { Button, Input } from "@heroui/react";
+import { Button, Input, Spinner } from "@heroui/react";
 import { Search, X } from "lucide-react";
 import { useState } from "react";
 import { useChat } from "@/providers/ChatProvider";
 
 export default function Sidebar() {
   const [isSearchable, setIsSearchable] = useState(false);
-  const { users, selectedUser, selectUser } = useChat();
+  const { users, loading, selectedUser, selectUser } = useChat();
 
   return (
     <aside className="w-80 h-full bg-white rounded-xl overflow-x-hidden">
@@ -44,14 +44,23 @@ export default function Sidebar() {
       </div>
 
       <div className="flex flex-col gap-1 py-3 px-4">
-        {users.map((user) => (
-          <UserListItem
-            key={user.id}
-            user={user}
-            isActive={user.id === selectedUser?.id}
-            onClick={() => selectUser(user)}
+        {loading ? (
+          <Spinner
+            size="md"
+            variant="gradient"
+            className="my-2"
+            color="default"
           />
-        ))}
+        ) : (
+          users.map((user) => (
+            <UserListItem
+              key={user.id}
+              user={user}
+              isActive={user.id === selectedUser?.id}
+              onClick={() => selectUser(user)}
+            />
+          ))
+        )}
       </div>
     </aside>
   );

@@ -58,8 +58,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   }>(GET_USERS);
 
   const users = useMemo<User[]>(() => {
-    return usersData?.users ?? [];
-  }, [usersData]);
+    const initialUsers = usersData?.users ?? [];
+    const filteredUsers = initialUsers.filter((u) => u.id !== currentUserId);
+    return filteredUsers;
+  }, [usersData, currentUserId]);
 
   const conversationId = useMemo(() => {
     if (!selectedUser || !currentUserId) return null;

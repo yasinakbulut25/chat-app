@@ -23,10 +23,15 @@ const typeDefs = gql`
     createdAt: String!
   }
 
+  type LastMessage {
+    content: String
+    createdAt: String
+  }
+
   type Conversation {
     id: ID!
     participantIds: [ID!]!
-    lastMessage: String
+    lastMessage: LastMessage
     updatedAt: String!
   }
 
@@ -45,6 +50,7 @@ const typeDefs = gql`
   type Subscription {
     userAdded: User!
     messageAdded(conversationId: ID!): Message!
+    conversationUpdated(userId: ID!): Conversation!
   }
 `;
 

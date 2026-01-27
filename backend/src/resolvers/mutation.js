@@ -2,7 +2,11 @@ import { v4 as uuid } from "uuid";
 import messages from "../data/messages.js";
 import users from "../data/users.js";
 import conversations from "../data/conversations.js";
-import pubsub, { MESSAGE_ADDED, USER_ADDED } from "../pubsub.js";
+import pubsub, {
+  CONVERSATION_UPDATED,
+  MESSAGE_ADDED,
+  USER_ADDED,
+} from "../pubsub.js";
 
 export const mutation = {
   createConversation: (_, { participantIds }) => {
@@ -17,7 +21,10 @@ export const mutation = {
     const conversation = {
       id: uuid(),
       participantIds,
-      lastMessage: null,
+      lastMessage: {
+        content: "",
+        createdAt: new Date().toISOString(),
+      },
       updatedAt: new Date().toISOString(),
     };
 
@@ -26,6 +33,14 @@ export const mutation = {
   },
 
   sendMessage: (_, { conversationId, senderId, content }) => {
+    const conversation = conversations.find((c) => c.id === conversationId);
+
+    if (!conversation) throw new Error("Conversation not found");
+
+    if (!conversation.participantIds.includes(senderId)) {
+      throw new Error("User is not part of this conversation");
+    }
+
     const message = {
       id: uuid(),
       conversationId,
@@ -36,14 +51,15 @@ export const mutation = {
 
     messages.push(message);
 
-    const convo = conversations.find((c) => c.id === conversationId);
-    if (convo) {
-      convo.lastMessage = content;
-      convo.updatedAt = message.createdAt;
-    }
+    conversation.lastMessage = content;
+    conversation.updatedAt = message.createdAt;
 
     pubsub.publish(MESSAGE_ADDED, {
       messageAdded: message,
+    });
+
+    pubsub.publish(CONVERSATION_UPDATED, {
+      conversationUpdated: conversation,
     });
 
     return message;

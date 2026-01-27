@@ -43,7 +43,7 @@ export default function UserListItem({ user, isActive, onClick }: Props) {
         </div>
 
         <div className="text-sm text-slate-500 truncate">
-          {user.lastMessage}
+          {/* {user.lastMessage} */}
         </div>
       </div>
     </div>

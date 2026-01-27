@@ -21,7 +21,8 @@ import {
 import { Message } from "@/types/message";
 import { User } from "@/types/user";
 import { useAuth } from "./AuthContext";
-import { getConversationId } from "@/utils";
+import { CREATE_CONVERSATION } from "@/graphql/mutations/createConversation";
+import { CreateConversationResponse } from "@/types/conversation";
 
 type ChatContextValue = {
   users: User[];
@@ -38,12 +39,13 @@ type ApiMessage = {
   content: string;
   senderId: string;
   createdAt: string;
-  __typename?: "Message";
 };
 
 type MessageAddedResponse = {
   messageAdded: ApiMessage;
 };
+
+const localActiveConversationIdKey = "activeConversationId";
 
 const ChatContext = createContext<ChatContextValue | null>(null);
 
@@ -53,26 +55,27 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+  const [activeConversationId, setActiveConversationId] = useState<
+    string | null
+  >(() => {
+    if (typeof window === "undefined") return null;
+    const convId = localStorage.getItem(localActiveConversationIdKey);
+    return convId ? convId : null;
+  });
+
   const { data: usersData, loading: usersLoading } = useQuery<{
     users: User[];
   }>(GET_USERS);
 
-  const users = useMemo<User[]>(() => {
-    const initialUsers = usersData?.users ?? [];
-    const filteredUsers = initialUsers.filter((u) => u.id !== currentUserId);
-    return filteredUsers;
+  const users = useMemo(() => {
+    return (usersData?.users ?? []).filter((u) => u.id !== currentUserId);
   }, [usersData, currentUserId]);
-
-  const conversationId = useMemo(() => {
-    if (!selectedUser || !currentUserId) return null;
-    return getConversationId(currentUserId, selectedUser.id);
-  }, [currentUserId, selectedUser]);
 
   const { data: messagesData, loading: messagesLoading } = useQuery<{
     messages: ApiMessage[];
   }>(GET_MESSAGES, {
-    variables: { conversationId: conversationId ?? "" },
-    skip: !conversationId,
+    variables: { conversationId: activeConversationId ?? "" },
+    skip: !activeConversationId,
     fetchPolicy: "network-only",
   });
 
@@ -93,67 +96,58 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     SEND_MESSAGE,
   );
 
+  const [createConversationMutation] =
+    useMutation<CreateConversationResponse>(CREATE_CONVERSATION);
+
+  const selectUser = useCallback(
+    async (user: User) => {
+      setSelectedUser(user);
+
+      const { data } = await createConversationMutation({
+        variables: { participantIds: [currentUserId, user.id] },
+      });
+      const newConvId = data?.createConversation?.id;
+      if (!newConvId) return;
+
+      setActiveConversationId(newConvId);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(localActiveConversationIdKey, newConvId);
+      }
+    },
+    [currentUserId, createConversationMutation],
+  );
+
   const sendMessage = useCallback(
     async (content: string) => {
-      if (!conversationId || !currentUserId || !content.trim()) return;
-
-      const optimisticId = `optimistic-${Date.now()}`;
+      if (
+        !selectedUser ||
+        !currentUserId ||
+        !content.trim() ||
+        !activeConversationId
+      )
+        return;
 
       await sendMessageMutation({
         variables: {
-          conversationId,
+          conversationId: activeConversationId,
           senderId: currentUserId,
           content: content.trim(),
         },
-
-        optimisticResponse: {
-          sendMessage: {
-            id: optimisticId,
-            conversationId,
-            content: content.trim(),
-            senderId: currentUserId,
-            createdAt: new Date().toISOString(),
-            __typename: "Message",
-          },
-        },
-
-        update: (cache, { data }) => {
-          if (!data?.sendMessage) return;
-
-          const existing = cache.readQuery<{ messages: ApiMessage[] }>({
-            query: GET_MESSAGES,
-            variables: { conversationId },
-          });
-
-          if (!existing) return;
-          if (existing.messages.some((m) => m.id === data.sendMessage.id))
-            return;
-
-          cache.writeQuery({
-            query: GET_MESSAGES,
-            variables: { conversationId },
-            data: {
-              messages: [...existing.messages, data.sendMessage],
-            },
-          });
-        },
       });
     },
-    [conversationId, currentUserId, sendMessageMutation],
+    [selectedUser, currentUserId, activeConversationId, sendMessageMutation],
   );
 
   useSubscription<MessageAddedResponse>(MESSAGE_SUBSCRIPTION, {
-    skip: !conversationId,
-    variables: { conversationId },
+    skip: !activeConversationId,
+    variables: { conversationId: activeConversationId ?? "" },
     onData: ({ client, data }) => {
       const newMessage = data.data?.messageAdded;
-      if (!newMessage || !conversationId) return;
+      if (!newMessage || !activeConversationId) return;
 
-      const existing = client.readQuery<{
-        messages: ApiMessage[];
-      }>({
+      const existing = client.readQuery<{ messages: ApiMessage[] }>({
         query: GET_MESSAGES,
-        variables: { conversationId },
+        variables: { conversationId: activeConversationId },
       });
 
       if (!existing) return;
@@ -161,10 +155,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
       client.writeQuery({
         query: GET_MESSAGES,
-        variables: { conversationId },
-        data: {
-          messages: [...existing.messages, newMessage],
-        },
+        variables: { conversationId: activeConversationId },
+        data: { messages: [...existing.messages, newMessage] },
       });
     },
   });
@@ -197,10 +189,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     },
   });
 
-  const selectUser = (user: User) => {
-    setSelectedUser(user);
-  };
-
   const value = useMemo<ChatContextValue>(
     () => ({
       users,
@@ -210,7 +198,15 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       selectUser,
       sendMessage,
     }),
-    [users, selectedUser, messages, usersLoading, messagesLoading, sendMessage],
+    [
+      users,
+      selectedUser,
+      messages,
+      usersLoading,
+      messagesLoading,
+      selectUser,
+      sendMessage,
+    ],
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

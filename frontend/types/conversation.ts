@@ -1,10 +1,12 @@
+export type LastMessage = {
+  content: string;
+  createdAt: string;
+} | null;
+
 export type Conversation = {
   id: string;
   participantIds: string[];
-  lastMessage: {
-    content: string;
-    createdAt: string;
-  } | null;
+  lastMessage: LastMessage;
 };
 
 export type CreateConversationResponse = {

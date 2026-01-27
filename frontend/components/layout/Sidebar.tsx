@@ -3,12 +3,38 @@
 import UserListItem from "@/components/users/UserListItem";
 import { Button, Input, Spinner } from "@heroui/react";
 import { Search, X } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useChat } from "@/providers/ChatProvider";
+import { UserWithLastMessage } from "@/types/user";
 
 export default function Sidebar() {
   const [isSearchable, setIsSearchable] = useState(false);
-  const { users, loading, selectedUser, selectUser } = useChat();
+  const {
+    users,
+    loading,
+    selectedUser,
+    messages,
+    activeConversationId,
+    selectUser,
+  } = useChat();
+
+  const usersWithLastMessage: UserWithLastMessage[] = useMemo(() => {
+    return users.map((user) => {
+      const conversationMessages = messages.filter(
+        (msg) => msg.conversationId === activeConversationId,
+      );
+
+      const lastMessage =
+        conversationMessages.length > 0
+          ? conversationMessages[conversationMessages.length - 1]
+          : null;
+
+      return {
+        ...user,
+        lastMessage,
+      };
+    });
+  }, [users, messages, activeConversationId]);
 
   return (
     <aside className="w-80 h-full bg-white rounded-xl overflow-x-hidden">
@@ -52,7 +78,7 @@ export default function Sidebar() {
             color="default"
           />
         ) : (
-          users.map((user) => (
+          usersWithLastMessage.map((user) => (
             <UserListItem
               key={user.id}
               user={user}

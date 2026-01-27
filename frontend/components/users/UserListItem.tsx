@@ -1,10 +1,10 @@
-import { User } from "@/types/user";
+import { UserWithLastMessage } from "@/types/user";
 import { Button } from "@heroui/react";
 import { Star } from "lucide-react";
 import Image from "next/image";
 
 type Props = {
-  user: User;
+  user: UserWithLastMessage;
   isActive: boolean;
   onClick: () => void;
 };
@@ -43,7 +43,7 @@ export default function UserListItem({ user, isActive, onClick }: Props) {
         </div>
 
         <div className="text-sm text-slate-500 truncate">
-          {/* {user.lastMessage} */}
+          {user.lastMessage?.content}
         </div>
       </div>
     </div>

@@ -29,6 +29,7 @@ type ChatContextValue = {
   selectedUser: User | null;
   messages: Message[];
   loading: boolean;
+  activeConversationId: string | null;
   selectUser: (user: User) => void;
   sendMessage: (content: string) => Promise<void>;
 };
@@ -195,6 +196,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       selectedUser,
       messages,
       loading: usersLoading || messagesLoading,
+      activeConversationId,
       selectUser,
       sendMessage,
     }),
@@ -204,6 +206,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       messages,
       usersLoading,
       messagesLoading,
+      activeConversationId,
       selectUser,
       sendMessage,
     ],

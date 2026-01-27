@@ -3,26 +3,48 @@ import { gql } from "apollo-server";
 const typeDefs = gql`
   type User {
     id: ID!
-    username: String!
+    name: String!
+    image: String!
+    isOnline: Boolean!
+  }
+
+  input CreateUserInput {
+    id: ID!
+    name: String!
+    image: String!
+    isOnline: Boolean!
   }
 
   type Message {
     id: ID!
+    conversationId: ID!
     content: String!
-    user: User!
+    senderId: ID!
     createdAt: String!
   }
 
+  type Conversation {
+    id: ID!
+    participantIds: [ID!]!
+    lastMessage: String
+    updatedAt: String!
+  }
+
   type Query {
-    messages: [Message!]!
+    users: [User!]!
+    messages(conversationId: ID!): [Message!]!
+    conversations(userId: ID!): [Conversation!]!
   }
 
   type Mutation {
-    sendMessage(content: String!, username: String!): Message!
+    createUser(input: CreateUserInput!): User!
+    createConversation(participantIds: [ID!]!): Conversation!
+    sendMessage(conversationId: ID!, senderId: ID!, content: String!): Message!
   }
 
   type Subscription {
-    messageAdded: Message!
+    userAdded: User!
+    messageAdded(conversationId: ID!): Message!
   }
 `;
 

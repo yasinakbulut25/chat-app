@@ -5,8 +5,9 @@ export const GET_MESSAGES = gql`
     messages(conversationId: $conversationId) {
       id
       conversationId
-      text
+      content
       senderId
+      createdAt
     }
   }
 `;

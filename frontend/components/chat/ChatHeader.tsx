@@ -16,7 +16,7 @@ export default function ChatHeader({ user }: Props) {
         className="rounded-full object-cover min-w-6 h-6"
       />
 
-      <span className="font-medium text-base text-slate-900 capitalize">
+      <span className="font-medium text-base text-slate-900">
         {user.name}
       </span>
       <span

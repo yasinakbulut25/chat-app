@@ -9,12 +9,19 @@ import {
   useCallback,
 } from "react";
 import { useMutation, useQuery, useSubscription } from "@apollo/client/react";
+
 import { GET_USERS } from "@/graphql/queries/users";
 import { GET_MESSAGES } from "@/graphql/queries/messages";
 import { SEND_MESSAGE } from "@/graphql/mutations/sendMessage";
-import { User } from "@/types/user";
+import {
+  MESSAGE_SUBSCRIPTION,
+  USER_ADDED_SUBSCRIPTION,
+} from "@/graphql/subscriptions";
+
 import { Message } from "@/types/message";
-import { MESSAGE_SUBSCRIPTION } from "@/graphql/subscriptions";
+import { User } from "@/types/user";
+import { useAuth } from "./AuthContext";
+import { getConversationId } from "@/utils";
 
 type ChatContextValue = {
   users: User[];
@@ -22,44 +29,49 @@ type ChatContextValue = {
   messages: Message[];
   loading: boolean;
   selectUser: (user: User) => void;
-  sendMessage: (text: string) => Promise<void>;
+  sendMessage: (content: string) => Promise<void>;
+};
+
+type ApiMessage = {
+  id: string;
+  conversationId: string;
+  content: string;
+  senderId: string;
+  createdAt: string;
+  __typename?: "Message";
 };
 
 type MessageAddedResponse = {
-  messageAdded: {
-    id: string;
-    conversationId: string;
-    text: string;
-    senderId: string;
-    __typename: "Message";
-  };
+  messageAdded: ApiMessage;
 };
 
 const ChatContext = createContext<ChatContextValue | null>(null);
 
-const CURRENT_USER_ID = "me";
-
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? "";
+
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const { data: usersData, loading: usersLoading } = useQuery<{
     users: User[];
   }>(GET_USERS);
+
   const users = useMemo<User[]>(() => {
     return usersData?.users ?? [];
   }, [usersData]);
+
+  const conversationId = useMemo(() => {
+    if (!selectedUser || !currentUserId) return null;
+    return getConversationId(currentUserId, selectedUser.id);
+  }, [currentUserId, selectedUser]);
+
   const { data: messagesData, loading: messagesLoading } = useQuery<{
-    messages: {
-      id: string;
-      conversationId: string;
-      text: string;
-      senderId: string;
-    }[];
+    messages: ApiMessage[];
   }>(GET_MESSAGES, {
-    variables: {
-      conversationId: selectedUser?.id ?? "",
-    },
-    skip: !selectedUser,
+    variables: { conversationId: conversationId ?? "" },
+    skip: !conversationId,
+    fetchPolicy: "network-only",
   });
 
   const messages = useMemo<Message[]>(() => {
@@ -67,41 +79,38 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
     return messagesData.messages.map((msg) => ({
       id: msg.id,
-      userId: msg.senderId,
-      text: msg.text,
       conversationId: msg.conversationId,
-      isOwn: msg.senderId === CURRENT_USER_ID,
+      content: msg.content,
+      createdAt: msg.createdAt,
+      userId: msg.senderId,
+      isOwn: msg.senderId === currentUserId,
     }));
-  }, [messagesData]);
+  }, [messagesData, currentUserId]);
 
-  const [sendMessageMutation] = useMutation<{
-    sendMessage: {
-      id: string;
-      conversationId: string;
-      text: string;
-      senderId: string;
-      __typename: "Message";
-    };
-  }>(SEND_MESSAGE);
+  const [sendMessageMutation] = useMutation<{ sendMessage: ApiMessage }>(
+    SEND_MESSAGE,
+  );
 
   const sendMessage = useCallback(
-    async (text: string) => {
-      if (!selectedUser || !text.trim()) return;
+    async (content: string) => {
+      if (!conversationId || !currentUserId || !content.trim()) return;
 
       const optimisticId = `optimistic-${Date.now()}`;
 
       await sendMessageMutation({
         variables: {
-          conversationId: selectedUser.id,
-          text: text.trim(),
+          conversationId,
+          senderId: currentUserId,
+          content: content.trim(),
         },
 
         optimisticResponse: {
           sendMessage: {
             id: optimisticId,
-            conversationId: selectedUser.id,
-            text,
-            senderId: CURRENT_USER_ID,
+            conversationId,
+            content: content.trim(),
+            senderId: currentUserId,
+            createdAt: new Date().toISOString(),
             __typename: "Message",
           },
         },
@@ -109,24 +118,18 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         update: (cache, { data }) => {
           if (!data?.sendMessage) return;
 
-          const existing = cache.readQuery<{
-            messages: {
-              id: string;
-              conversationId: string;
-              text: string;
-              senderId: string;
-              __typename: string;
-            }[];
-          }>({
+          const existing = cache.readQuery<{ messages: ApiMessage[] }>({
             query: GET_MESSAGES,
-            variables: { conversationId: selectedUser.id },
+            variables: { conversationId },
           });
 
           if (!existing) return;
+          if (existing.messages.some((m) => m.id === data.sendMessage.id))
+            return;
 
           cache.writeQuery({
             query: GET_MESSAGES,
-            variables: { conversationId: selectedUser.id },
+            variables: { conversationId },
             data: {
               messages: [...existing.messages, data.sendMessage],
             },
@@ -134,48 +137,67 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         },
       });
     },
-    [selectedUser, sendMessageMutation],
+    [conversationId, currentUserId, sendMessageMutation],
   );
 
-  const selectUser = (user: User) => {
-    setSelectedUser(user);
-  };
-
   useSubscription<MessageAddedResponse>(MESSAGE_SUBSCRIPTION, {
-    skip: !selectedUser,
-    variables: {
-      conversationId: selectedUser?.id,
-    },
+    skip: !conversationId,
+    variables: { conversationId },
     onData: ({ client, data }) => {
       const newMessage = data.data?.messageAdded;
-      if (!newMessage || !selectedUser) return;
+      if (!newMessage || !conversationId) return;
 
       const existing = client.readQuery<{
-        messages: {
-          id: string;
-          conversationId: string;
-          text: string;
-          senderId: string;
-          __typename: string;
-        }[];
+        messages: ApiMessage[];
       }>({
         query: GET_MESSAGES,
-        variables: { conversationId: selectedUser.id },
+        variables: { conversationId },
       });
 
       if (!existing) return;
-
       if (existing.messages.some((m) => m.id === newMessage.id)) return;
 
       client.writeQuery({
         query: GET_MESSAGES,
-        variables: { conversationId: selectedUser.id },
+        variables: { conversationId },
         data: {
           messages: [...existing.messages, newMessage],
         },
       });
     },
   });
+
+  useSubscription<{ userAdded: User }>(USER_ADDED_SUBSCRIPTION, {
+    onData: ({ client, data }) => {
+      const newUser = data.data?.userAdded;
+      if (!newUser) return;
+
+      const existing = client.readQuery<{ users: User[] }>({
+        query: GET_USERS,
+      });
+
+      if (!existing) {
+        client.writeQuery({
+          query: GET_USERS,
+          data: { users: [newUser] },
+        });
+        return;
+      }
+
+      if (existing.users.some((u) => u.id === newUser.id)) return;
+
+      client.writeQuery({
+        query: GET_USERS,
+        data: {
+          users: [...existing.users, newUser],
+        },
+      });
+    },
+  });
+
+  const selectUser = (user: User) => {
+    setSelectedUser(user);
+  };
 
   const value = useMemo<ChatContextValue>(
     () => ({

@@ -1,16 +1,19 @@
 "use client";
 
-import { httpClient } from "@/graphql/client";
-import { wsClient } from "@/graphql/wsClient";
+import { apolloClient } from "@/graphql/client";
+import { AuthProvider } from "@/providers/AuthContext";
+import { ChatProvider } from "@/providers/ChatProvider";
 import { ApolloProvider } from "@apollo/client/react";
 import { HeroUIProvider } from "@heroui/react";
 
 function ClientProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <ApolloProvider client={httpClient}>
-      <ApolloProvider client={wsClient}>
-        <HeroUIProvider> {children}</HeroUIProvider>
-      </ApolloProvider>
+    <ApolloProvider client={apolloClient}>
+      <AuthProvider>
+        <ChatProvider>
+          <HeroUIProvider> {children}</HeroUIProvider>
+        </ChatProvider>
+      </AuthProvider>
     </ApolloProvider>
   );
 }

@@ -7,8 +7,6 @@ export const GET_USERS = gql`
       name
       image
       isOnline
-      conversationId
-      lastMessage
     }
   }
 `;

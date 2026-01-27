@@ -22,7 +22,7 @@ export default function MessageItem({ message, image }: Props) {
         className={`w-full px-3 py-2 text-sm rounded-xl whitespace-pre-wrap
           ${message.isOwn ? "bg-indigo-500 rounded-tr-none text-white" : "bg-slate-100 rounded-tl-none"}`}
       >
-        {message.text}
+        {message.content}
       </div>
     </div>
   );

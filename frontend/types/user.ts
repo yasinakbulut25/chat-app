@@ -1,4 +1,4 @@
-import { LastMessage } from "./conversation";
+import { Message } from "./message";
 
 export type User = {
   id: string;
@@ -8,5 +8,5 @@ export type User = {
 };
 
 export type UserWithLastMessage = User & {
-  lastMessage: LastMessage;
+  lastMessage: Message | null;
 };

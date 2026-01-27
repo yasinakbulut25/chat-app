@@ -1,6 +1,6 @@
 import { UserWithLastMessage } from "@/types/user";
 import { Button } from "@heroui/react";
-import { Star } from "lucide-react";
+import { Forward, Star } from "lucide-react";
 import Image from "next/image";
 
 type Props = {
@@ -42,7 +42,8 @@ export default function UserListItem({ user, isActive, onClick }: Props) {
           </div>
         </div>
 
-        <div className="text-sm text-slate-500 truncate">
+        <div className="text-sm flex items-center gap-1 text-slate-500 truncate">
+          {user.lastMessage?.isOwn && <Forward width={14} />}
           {user.lastMessage?.content}
         </div>
       </div>

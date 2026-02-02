@@ -1,13 +1,16 @@
 import { withFilter } from "graphql-subscriptions";
-import pubsub, { MESSAGE_ADDED, USER_ADDED } from "../pubsub.js";
+import pubsub, {
+  MESSAGE_ADDED,
+  USER_ADDED,
+  CONVERSATION_UPDATED,
+} from "../pubsub.js";
 
 const subscription = {
   messageAdded: {
     subscribe: withFilter(
       () => pubsub.asyncIterableIterator([MESSAGE_ADDED]),
-      (payload, variables) => {
-        return payload.messageAdded.conversationId === variables.conversationId;
-      },
+      (payload, variables) =>
+        payload.messageAdded.conversationId === variables.conversationId,
     ),
   },
 
@@ -16,7 +19,11 @@ const subscription = {
   },
 
   conversationUpdated: {
-    subscribe: (_, { userId }) => pubsub.asyncIterator([CONVERSATION_UPDATED]),
+    subscribe: withFilter(
+      () => pubsub.asyncIterableIterator([CONVERSATION_UPDATED]),
+      (payload, variables) =>
+        payload.conversationUpdated.participantIds.includes(variables.userId),
+    ),
   },
 };
 

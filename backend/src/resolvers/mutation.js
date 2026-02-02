@@ -10,22 +10,37 @@ import pubsub, {
 
 export const mutation = {
   createConversation: (_, { participantIds }) => {
+    const uniqueIds = [...new Set(participantIds)];
+
+    if (uniqueIds.length < 2) {
+      throw new Error("Conversation must have at least 2 participants");
+    }
+
+    const allUsersExist = uniqueIds.every((id) =>
+      users.some((u) => u.id === id),
+    );
+
+    if (!allUsersExist) {
+      throw new Error("One or more users not found");
+    }
+
+    const normalizedIds = [...uniqueIds].sort();
+
     const exists = conversations.find(
       (c) =>
-        c.participantIds.length === participantIds.length &&
-        c.participantIds.every((id) => participantIds.includes(id)),
+        JSON.stringify([...c.participantIds].sort()) ===
+        JSON.stringify(normalizedIds),
     );
 
     if (exists) return exists;
 
+    const now = new Date().toISOString();
+
     const conversation = {
       id: uuid(),
-      participantIds,
-      lastMessage: {
-        content: "",
-        createdAt: new Date().toISOString(),
-      },
-      updatedAt: new Date().toISOString(),
+      participantIds: normalizedIds,
+      lastMessage: null,
+      updatedAt: now,
     };
 
     conversations.push(conversation);
@@ -33,9 +48,19 @@ export const mutation = {
   },
 
   sendMessage: (_, { conversationId, senderId, content }) => {
-    const conversation = conversations.find((c) => c.id === conversationId);
+    if (!content.trim()) {
+      throw new Error("Message content cannot be empty");
+    }
 
-    if (!conversation) throw new Error("Conversation not found");
+    const senderExists = users.some((u) => u.id === senderId);
+    if (!senderExists) {
+      throw new Error("Sender not found");
+    }
+
+    const conversation = conversations.find((c) => c.id === conversationId);
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
 
     if (!conversation.participantIds.includes(senderId)) {
       throw new Error("User is not part of this conversation");
@@ -51,13 +76,13 @@ export const mutation = {
 
     messages.push(message);
 
-    conversation.lastMessage = content;
+    conversation.lastMessage = {
+      content,
+      createdAt: message.createdAt,
+    };
     conversation.updatedAt = message.createdAt;
 
-    pubsub.publish(MESSAGE_ADDED, {
-      messageAdded: message,
-    });
-
+    pubsub.publish(MESSAGE_ADDED, { messageAdded: message });
     pubsub.publish(CONVERSATION_UPDATED, {
       conversationUpdated: conversation,
     });

@@ -20,6 +20,25 @@ async function startServer() {
   // Apollo Server (HTTP)
   const apolloServer = new ApolloServer({
     schema,
+    context: ({ req, connectionParams }) => {
+      // HTTP request
+      if (req) {
+        const userId = req.headers["x-user-id"];
+        return {
+          user: userId ? { id: userId } : null,
+        };
+      }
+
+      // WebSocket (subscription)
+      if (connectionParams) {
+        const userId = connectionParams["x-user-id"];
+        return {
+          user: userId ? { id: userId } : null,
+        };
+      }
+
+      return { user: null };
+    },
   });
 
   await apolloServer.start();

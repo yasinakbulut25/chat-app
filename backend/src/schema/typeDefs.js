@@ -23,15 +23,10 @@ const typeDefs = gql`
     createdAt: String!
   }
 
-  type LastMessage {
-    content: String
-    createdAt: String
-  }
-
   type Conversation {
     id: ID!
     participantIds: [ID!]!
-    lastMessage: LastMessage
+    lastMessage: Message
     updatedAt: String!
   }
 

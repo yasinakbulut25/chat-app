@@ -76,10 +76,7 @@ export const mutation = {
 
     messages.push(message);
 
-    conversation.lastMessage = {
-      content,
-      createdAt: message.createdAt,
-    };
+    conversation.lastMessage = message;
     conversation.updatedAt = message.createdAt;
 
     pubsub.publish(MESSAGE_ADDED, { messageAdded: message });

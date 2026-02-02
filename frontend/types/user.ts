@@ -1,3 +1,5 @@
+import { Message } from "./message";
+
 export type User = {
   id: string;
   name: string;
@@ -5,11 +7,7 @@ export type User = {
   isOnline: boolean;
 };
 
-export type UserLastMessage = {
-  id: string;
-  content: string;
-  createdAt: string;
-  senderId: string;
+export type UserLastMessage = Message & {
   isOwn: boolean;
 };
 

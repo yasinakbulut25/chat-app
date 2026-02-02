@@ -6,7 +6,9 @@ export const CREATE_CONVERSATION = gql`
       id
       participantIds
       lastMessage {
+        id
         content
+        senderId
         createdAt
       }
       updatedAt

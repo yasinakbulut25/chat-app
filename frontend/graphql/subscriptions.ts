@@ -29,7 +29,9 @@ export const CONVERSATION_UPDATED_SUBSCRIPTION = gql`
       id
       participantIds
       lastMessage {
+        id
         content
+        senderId
         createdAt
       }
       updatedAt

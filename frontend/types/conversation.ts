@@ -1,12 +1,9 @@
-export type LastMessage = {
-  content: string;
-  createdAt: string;
-} | null;
+import { Message } from "./message";
 
 export type Conversation = {
   id: string;
   participantIds: string[];
-  lastMessage: LastMessage;
+  lastMessage: Message | null;
   updatedAt: string;
 };
 

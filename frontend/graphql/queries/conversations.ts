@@ -6,7 +6,9 @@ export const GET_CONVERSATIONS = gql`
       id
       participantIds
       lastMessage {
+        id
         content
+        senderId
         createdAt
       }
       updatedAt

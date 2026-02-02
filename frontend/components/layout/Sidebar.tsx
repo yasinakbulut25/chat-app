@@ -6,47 +6,34 @@ import { Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useChat } from "@/providers/ChatProvider";
 import { useAuth } from "@/providers/AuthContext";
-import { UserWithLastMessage } from "@/types/user";
 
 export default function Sidebar() {
   const [isSearchable, setIsSearchable] = useState(false);
   const { user } = useAuth();
   const currentUserId = user?.id;
-  const { users, loading, selectedUser, messages, conversations, selectUser } =
-    useChat();
+  const { users, loading, selectedUser, conversations, selectUser } = useChat();
 
-  const usersWithLastMessage: UserWithLastMessage[] = useMemo(() => {
+  const usersWithLastMessage = useMemo(() => {
     return users.map((user) => {
       const conversation = conversations.find((c) =>
         c.participantIds.includes(user.id),
       );
 
-      if (!conversation) {
+      if (!conversation || !conversation.lastMessage) {
         return { ...user, lastMessage: null };
       }
 
-      const conversationMessages = messages.filter(
-        (m) => m.conversationId === conversation.id,
-      );
-
-      if (conversationMessages.length === 0) {
-        return { ...user, lastMessage: null };
-      }
-
-      const lastMsg = conversationMessages[conversationMessages.length - 1];
+      const lastMsg = conversation.lastMessage;
 
       return {
         ...user,
         lastMessage: {
-          id: lastMsg.id,
-          content: lastMsg.content,
-          createdAt: lastMsg.createdAt,
-          senderId: lastMsg.senderId,
+          ...lastMsg,
           isOwn: lastMsg.senderId === currentUserId,
         },
       };
     });
-  }, [users, conversations, messages, currentUserId]);
+  }, [users, conversations, currentUserId]);
 
   return (
     <aside className="w-80 h-full bg-white rounded-xl overflow-x-hidden">

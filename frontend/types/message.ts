@@ -1,8 +1,11 @@
-export type Message = {
+export type MessageDTO = {
   id: string;
   conversationId: string;
   content: string;
+  senderId: string;
   createdAt: string;
-  userId: string;
+};
+
+export type Message = MessageDTO & {
   isOwn: boolean;
 };

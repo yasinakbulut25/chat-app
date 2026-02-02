@@ -17,23 +17,23 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const STORAGE_KEY = "chat_user";
+export const CHAT_USER_STORAGE_KEY = "chat_user";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
     if (typeof window === "undefined") return null;
 
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(CHAT_USER_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as User) : null;
   });
 
   const login = useCallback((currentUser: User) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentUser));
+    localStorage.setItem(CHAT_USER_STORAGE_KEY, JSON.stringify(currentUser));
     setUser(currentUser);
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(CHAT_USER_STORAGE_KEY);
     setUser(null);
   }, []);
 

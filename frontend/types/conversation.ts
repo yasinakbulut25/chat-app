@@ -7,6 +7,7 @@ export type Conversation = {
   id: string;
   participantIds: string[];
   lastMessage: LastMessage;
+  updatedAt: string;
 };
 
 export type CreateConversationResponse = {

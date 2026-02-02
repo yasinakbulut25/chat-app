@@ -2,6 +2,7 @@ import MessageItem from "./MessageItem";
 import { User } from "@/types/user";
 import { Message } from "@/types/message";
 import { useEffect, useRef } from "react";
+import { useAuth } from "@/providers/AuthContext";
 
 type Props = {
   user: Pick<User, "image" | "id">;
@@ -9,6 +10,7 @@ type Props = {
 };
 
 export default function MessageList({ user, messages }: Props) {
+  const { user: currentUser } = useAuth();
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -26,7 +28,11 @@ export default function MessageList({ user, messages }: Props) {
   return (
     <div className="flex-1 p-4 space-y-2 overflow-y-auto">
       {messages.map((msg) => (
-        <MessageItem key={msg.id} message={msg} image={user.image} />
+        <MessageItem
+          key={msg.id}
+          message={msg}
+          image={msg.isOwn ? currentUser?.image || "" : user.image}
+        />
       ))}
       <div ref={bottomRef} />
     </div>

@@ -9,6 +9,7 @@ export const GET_CONVERSATIONS = gql`
         content
         createdAt
       }
+      updatedAt
     }
   }
 `;

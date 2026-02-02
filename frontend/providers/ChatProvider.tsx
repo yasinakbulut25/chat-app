@@ -14,15 +14,17 @@ import { GET_USERS } from "@/graphql/queries/users";
 import { GET_MESSAGES } from "@/graphql/queries/messages";
 import { SEND_MESSAGE } from "@/graphql/mutations/sendMessage";
 import {
+  CONVERSATION_UPDATED_SUBSCRIPTION,
   MESSAGE_SUBSCRIPTION,
   USER_ADDED_SUBSCRIPTION,
 } from "@/graphql/subscriptions";
 
-import { Message } from "@/types/message";
+import { Message, MessageDTO } from "@/types/message";
 import { User } from "@/types/user";
 import { useAuth } from "./AuthContext";
 import { CREATE_CONVERSATION } from "@/graphql/mutations/createConversation";
-import { CreateConversationResponse } from "@/types/conversation";
+import { Conversation, CreateConversationResponse } from "@/types/conversation";
+import { GET_CONVERSATIONS } from "@/graphql/queries/conversations";
 
 type ChatContextValue = {
   users: User[];
@@ -75,20 +77,16 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const { data: messagesData, loading: messagesLoading } = useQuery<{
     messages: ApiMessage[];
   }>(GET_MESSAGES, {
-    variables: { conversationId: activeConversationId ?? "" },
+    variables: { conversationId: activeConversationId },
     skip: !activeConversationId,
-    fetchPolicy: "network-only",
+    fetchPolicy: "cache-and-network",
   });
 
   const messages = useMemo<Message[]>(() => {
     if (!messagesData?.messages) return [];
 
-    return messagesData.messages.map((msg) => ({
-      id: msg.id,
-      conversationId: msg.conversationId,
-      content: msg.content,
-      createdAt: msg.createdAt,
-      userId: msg.senderId,
+    return messagesData.messages.map((msg: MessageDTO) => ({
+      ...msg,
       isOwn: msg.senderId === currentUserId,
     }));
   }, [messagesData, currentUserId]);
@@ -189,6 +187,43 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       });
     },
   });
+
+  useSubscription<{ conversationUpdated: Conversation }>(
+    CONVERSATION_UPDATED_SUBSCRIPTION,
+    {
+      skip: !currentUserId,
+      variables: { userId: currentUserId },
+      onData: ({ client, data }) => {
+        const updated = data.data?.conversationUpdated;
+        if (!updated) return;
+
+        const existing = client.readQuery<{
+          conversations: Conversation[];
+        }>({
+          query: GET_CONVERSATIONS,
+          variables: { userId: currentUserId },
+        });
+
+        if (!existing) return;
+
+        const others = existing.conversations.filter(
+          (c) => c.id !== updated.id,
+        );
+
+        client.writeQuery({
+          query: GET_CONVERSATIONS,
+          variables: { userId: currentUserId },
+          data: {
+            conversations: [updated, ...others].sort(
+              (a, b) =>
+                new Date(b.updatedAt).getTime() -
+                new Date(a.updatedAt).getTime(),
+            ),
+          },
+        });
+      },
+    },
+  );
 
   const value = useMemo<ChatContextValue>(
     () => ({

@@ -22,3 +22,17 @@ export const USER_ADDED_SUBSCRIPTION = gql`
     }
   }
 `;
+
+export const CONVERSATION_UPDATED_SUBSCRIPTION = gql`
+  subscription OnConversationUpdated($userId: ID!) {
+    conversationUpdated(userId: $userId) {
+      id
+      participantIds
+      lastMessage {
+        content
+        createdAt
+      }
+      updatedAt
+    }
+  }
+`;

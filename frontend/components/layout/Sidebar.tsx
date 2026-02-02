@@ -5,36 +5,48 @@ import { Button, Input, Spinner } from "@heroui/react";
 import { Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useChat } from "@/providers/ChatProvider";
+import { useAuth } from "@/providers/AuthContext";
 import { UserWithLastMessage } from "@/types/user";
 
 export default function Sidebar() {
   const [isSearchable, setIsSearchable] = useState(false);
-  const {
-    users,
-    loading,
-    selectedUser,
-    messages,
-    activeConversationId,
-    selectUser,
-  } = useChat();
+  const { user } = useAuth();
+  const currentUserId = user?.id;
+  const { users, loading, selectedUser, messages, conversations, selectUser } =
+    useChat();
 
   const usersWithLastMessage: UserWithLastMessage[] = useMemo(() => {
     return users.map((user) => {
-      const conversationMessages = messages.filter(
-        (msg) => msg.conversationId === activeConversationId,
+      const conversation = conversations.find((c) =>
+        c.participantIds.includes(user.id),
       );
 
-      const lastMessage =
-        conversationMessages.length > 0
-          ? conversationMessages[conversationMessages.length - 1]
-          : null;
+      if (!conversation) {
+        return { ...user, lastMessage: null };
+      }
+
+      const conversationMessages = messages.filter(
+        (m) => m.conversationId === conversation.id,
+      );
+
+      if (conversationMessages.length === 0) {
+        return { ...user, lastMessage: null };
+      }
+
+      const lastMsg = conversationMessages[conversationMessages.length - 1];
 
       return {
         ...user,
-        lastMessage,
+        lastMessage: {
+          id: lastMsg.id,
+          content: lastMsg.content,
+          createdAt: lastMsg.createdAt,
+          senderId: lastMsg.senderId,
+          isOwn: lastMsg.senderId === currentUserId,
+        },
       };
     });
-  }, [users, messages, activeConversationId]);
+  }, [users, conversations, messages, currentUserId]);
 
   return (
     <aside className="w-80 h-full bg-white rounded-xl overflow-x-hidden">

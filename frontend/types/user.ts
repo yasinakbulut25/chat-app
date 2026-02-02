@@ -1,5 +1,3 @@
-import { LastMessage } from "./conversation";
-
 export type User = {
   id: string;
   name: string;
@@ -7,6 +5,14 @@ export type User = {
   isOnline: boolean;
 };
 
+export type UserLastMessage = {
+  id: string;
+  content: string;
+  createdAt: string;
+  senderId: string;
+  isOwn: boolean;
+};
+
 export type UserWithLastMessage = User & {
-  lastMessage: LastMessage;
+  lastMessage: UserLastMessage | null;
 };

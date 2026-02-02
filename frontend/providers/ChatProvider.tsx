@@ -30,6 +30,7 @@ type ChatContextValue = {
   users: User[];
   selectedUser: User | null;
   messages: Message[];
+  conversations: Conversation[];
   loading: boolean;
   activeConversationId: string | null;
   selectUser: (user: User) => void;
@@ -90,6 +91,19 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       isOwn: msg.senderId === currentUserId,
     }));
   }, [messagesData, currentUserId]);
+
+  const { data: conversationsData, loading: conversationsLoading } = useQuery<{
+    conversations: Conversation[];
+  }>(GET_CONVERSATIONS, {
+    variables: { userId: currentUserId },
+    skip: !currentUserId,
+  });
+
+  const conversations = useMemo<Conversation[]>(() => {
+    if (!conversationsData?.conversations) return [];
+
+    return conversationsData.conversations;
+  }, [conversationsData]);
 
   const [sendMessageMutation] = useMutation<{ sendMessage: ApiMessage }>(
     SEND_MESSAGE,
@@ -230,7 +244,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       users,
       selectedUser,
       messages,
-      loading: usersLoading || messagesLoading,
+      conversations,
+      loading: usersLoading || messagesLoading || conversationsLoading,
       activeConversationId,
       selectUser,
       sendMessage,
@@ -239,8 +254,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       users,
       selectedUser,
       messages,
+      conversations,
       usersLoading,
       messagesLoading,
+      conversationsLoading,
       activeConversationId,
       selectUser,
       sendMessage,

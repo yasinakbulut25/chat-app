@@ -9,31 +9,37 @@ import { useAuth } from "@/providers/AuthContext";
 
 export default function Sidebar() {
   const [isSearchable, setIsSearchable] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+
   const { user } = useAuth();
   const currentUserId = user?.id;
   const { users, loading, selectedUser, conversations, selectUser } = useChat();
 
   const usersWithLastMessage = useMemo(() => {
-    return users.map((user) => {
-      const conversation = conversations.find((c) =>
-        c.participantIds.includes(user.id),
+    return users
+      .map((user) => {
+        const conversation = conversations.find((c) =>
+          c.participantIds.includes(user.id),
+        );
+
+        if (!conversation || !conversation.lastMessage) {
+          return { ...user, lastMessage: null };
+        }
+
+        const lastMsg = conversation.lastMessage;
+
+        return {
+          ...user,
+          lastMessage: {
+            ...lastMsg,
+            isOwn: lastMsg.senderId === currentUserId,
+          },
+        };
+      })
+      .filter((user) =>
+        user.name.toLowerCase().includes(searchValue.toLowerCase()),
       );
-
-      if (!conversation || !conversation.lastMessage) {
-        return { ...user, lastMessage: null };
-      }
-
-      const lastMsg = conversation.lastMessage;
-
-      return {
-        ...user,
-        lastMessage: {
-          ...lastMsg,
-          isOwn: lastMsg.senderId === currentUserId,
-        },
-      };
-    });
-  }, [users, conversations, currentUserId]);
+  }, [users, conversations, currentUserId, searchValue]);
 
   return (
     <aside className="w-80 h-full bg-white rounded-xl overflow-x-hidden">
@@ -59,6 +65,7 @@ export default function Sidebar() {
                 onPress={() => setIsSearchable((prev) => !prev)}
               />
             }
+            onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Search"
             classNames={{
               inputWrapper:

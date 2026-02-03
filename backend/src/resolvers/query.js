@@ -1,9 +1,15 @@
 import conversations from "../data/conversations.js";
 import messages from "../data/messages.js";
+import { onlineUsers } from "../data/onlineUsers.js";
 import users from "../data/users.js";
 
 const query = {
-  users: () => users,
+  users: () => {
+    return users.map((u) => ({
+      ...u,
+      isOnline: onlineUsers.has(u.id),
+    }));
+  },
   messages: (_, { conversationId }, { user }) => {
     if (!user) throw new Error("Not authenticated");
 

@@ -6,21 +6,32 @@ import { User } from "@/types/user";
 import { useMutation } from "@apollo/client/react";
 import { Button } from "@heroui/react";
 import { MessageCircleMore } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
+
+const AVATARS = [
+  "/avatars/avatar1.png",
+  "/avatars/avatar2.png",
+  "/avatars/avatar3.png",
+  "/avatars/avatar4.png",
+  "/avatars/avatar5.png",
+  "/avatars/avatar6.png",
+];
 
 export default function Login() {
   const [username, setUserName] = useState("");
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   const [createUser] = useMutation(CREATE_USER);
 
   const { login } = useAuth();
 
   const handleLogin = async () => {
-    if (!username.trim()) return;
+    if (!username.trim() || !selectedAvatar) return;
 
     const newUser: User = {
       id: crypto.randomUUID(),
       name: username.trim(),
-      image: "/users/user1.png",
+      image: selectedAvatar,
       isOnline: true,
     };
 
@@ -65,10 +76,55 @@ export default function Login() {
               />
             </div>
 
+            <div className="flex flex-col">
+              <label className="mb-3 block text-sm font-medium text-slate-700">
+                Select Avatar
+              </label>
+              <div className="grid grid-cols-6 gap-3">
+                {AVATARS.map((avatar) => (
+                  <button
+                    key={avatar}
+                    type="button"
+                    onClick={() => setSelectedAvatar(avatar)}
+                    className={`relative aspect-square overflow-hidden rounded-xl border-2 transition-all duration-200 cursor-pointer hover:scale-105 ${
+                      selectedAvatar === avatar
+                        ? "border-slate-900 ring-4 ring-slate-100"
+                        : "border-slate-200 hover:border-slate-400"
+                    }`}
+                  >
+                    <Image
+                      src={avatar}
+                      alt="Avatar"
+                      className="h-full w-full object-cover"
+                      width={100}
+                      height={100}
+                    />
+                    {selectedAvatar === avatar && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20">
+                        <div className="h-5 w-5 rounded-full bg-slate-900 flex items-center justify-center">
+                          <svg
+                            className="h-3 w-3 text-white"
+                            fill="none"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="3"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path d="M5 13l4 4L19 7"></path>
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <Button
               className="w-full rounded-xl bg-linear-to-r from-slate-800 to-slate-900 py-4 h-auto font-semibold text-white shadow-lg shadow-slate-900/25 transition-all duration-200 hover:shadow-xl hover:shadow-slate-900/30 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none active:scale-[0.98]"
               onPress={handleLogin}
-              disabled={!username.trim()}
+              disabled={!username.trim() || !selectedAvatar}
             >
               Sign In
             </Button>

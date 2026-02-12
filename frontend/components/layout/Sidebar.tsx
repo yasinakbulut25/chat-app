@@ -6,6 +6,7 @@ import { Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useChat } from "@/providers/ChatProvider";
 import { useAuth } from "@/providers/AuthContext";
+import Image from "next/image";
 
 export default function Sidebar() {
   const [isSearchable, setIsSearchable] = useState(false);
@@ -42,8 +43,8 @@ export default function Sidebar() {
   }, [users, conversations, currentUserId, searchValue]);
 
   return (
-    <aside className="w-80 h-full bg-white rounded-xl overflow-x-hidden">
-      <div className="flex items-center gap-2 justify-between px-4 py-2 border-b border-slate-200">
+    <aside className="relative w-80 h-full flex flex-col bg-white rounded-xl overflow-hidden">
+      <div className="sticky top-0 bg-white flex items-center gap-2 justify-between px-4 py-2 border-b border-slate-200 z-40">
         {!isSearchable ? (
           <>
             <h3 className="font-semibold text-base text-slate-900">Messages</h3>
@@ -75,7 +76,7 @@ export default function Sidebar() {
         )}
       </div>
 
-      <div className="flex flex-col gap-1 py-3 px-4">
+      <div className="flex flex-1 flex-col gap-1 py-3 px-4 overflow-auto">
         {loading ? (
           <Spinner
             size="md"
@@ -94,6 +95,25 @@ export default function Sidebar() {
           ))
         )}
       </div>
+      {user && (
+        <div className="sticky bottom-0 left-0 border-t border-slate-200 bg-white pl-6 pr-3 py-3 z-50">
+          <div className="flex items-center gap-3">
+            <Image
+              src={user.image}
+              alt={user.name}
+              width={36}
+              height={36}
+              className="rounded-full object-cover min-w-9 h-9"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-base text-slate-900 truncate">
+                {user.name}
+              </p>
+              <p className="text-xs text-slate-500">You</p>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
